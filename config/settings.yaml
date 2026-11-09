@@ -1,0 +1,334 @@
+# ==================== TÀI KHOẢN ĐĂNG BÀI ====================
+# Danh sách account ĐANG BẬT để đăng bài.
+# Mỗi số tương ứng file cookie: cookies/account{N}.json
+# Ví dụ: [1, 2, 4] → dùng account1.json, account2.json, account4.json
+# Muốn tắt account 2 → xóa số 2 khỏi mảng: [1, 4]
+acc_activity: [1]
+
+# Khoảng thời gian nghỉ ngẫu nhiên giữa 2 bài đăng của mỗi tài khoản tiếp theo (Giây)
+# Đây là interval NỀN. Nhịp thực tế = interval nền x hệ số khung giờ (posting_schedule bên dưới).
+# Median nền = 1125s -> với hourly_multipliers bên dưới ra ~80 bài/ngày/account:
+#   bài nhanh nhất 04:00 ~6.4 bài/giờ, bài chậm nhất 21:00 ~1.45 bài/giờ (69 phút/bài)
+delay_between_posts_seconds:
+  min: 650
+  max: 1600
+
+# ==================== LỊCH ĐĂNG BÀI THEO KHUNG GIỜ ====================
+# Thay vì đăng đều một nhịp, interval giữa 2 bài được nhân với hệ số của khung giờ hiện tại.
+#   multiplier < 1 -> rút ngắn interval -> đăng DÀY hơn (khung giờ nhiều view)
+#   multiplier > 1 -> giãn interval     -> đăng THƯA hơn (khung giờ tắc nghẽn)
+# Hệ số suy ra từ thống kê median view/giờ của OKX Orbit, tính theo giờ Việt Nam (UTC+7).
+posting_schedule:
+  enabled: true
+
+  # Múi giờ dùng để xác định khung giờ. 7 = giờ Việt Nam. Bỏ trống/null = dùng giờ hệ thống.
+  utc_offset_hours: 7
+
+  # Nhiễu ngẫu nhiên ±15% trên interval để nhịp không đều tăm tắp như máy.
+  jitter: 0.15
+
+  # Interval không bao giờ xuống dưới ngưỡng này (giây), kể cả khung giờ nhanh nhất.
+  min_interval_seconds: 60
+
+  # Buffer crawl/Gemini được định cỡ theo khung giờ đăng NHANH NHẤT trong N giờ tới,
+  # tránh hụt bài khi chuyển từ giờ nghẽn (21:00) sang giờ vàng (22:00-05:00).
+  planning_horizon_hours: 3
+
+  # ----- CHẾ ĐỘ RIÊNG CHO TỪNG NGÀY (né pattern lặp lại giữa các ngày) -----
+  # Mỗi ngày lấy 1 cường độ riêng: ngày vội đăng dày, ngày chậm đăng thưa.
+  # Kèm theo đó mỗi khung giờ trong ngày bị lệch thêm ±hourly_shape_noise,
+  # nên đường cong giờ-ngày hôm nay không trùng y hệt hôm qua.
+  # Random theo seed + YYYY-MM-DD -> ổn định cả ngày, restart không đổi nhịp.
+  # Số bài/ngày tỉ lệ thuận intensity (vì intensity chia thẳng vào interval), nên
+  # khoảng đối xứng 0.80-1.20 quanh 1.0 giữ trung bình ~80 bài/ngày và dao động ~63-95.
+  daily_variation:
+    enabled: true
+    volume_min: 0.80     # ngày chậm nhất: mọi interval x1.25
+    volume_max: 1.20     # ngày nhanh nhất: mọi interval x0.83
+    hourly_shape_noise: 0.10
+    seed: "orbit-vn-2026"
+
+  hourly_multipliers:
+    0: 0.75   # 00:00 - 01:00: Đêm muộn, phiên Mỹ sôi động (Median View: 10,632) -> Rút ngắn interval 25%
+    1: 0.75   # 01:00 - 02:00: Sóng đêm (Median View: 12,140) -> Rút ngắn 25%
+    2: 0.85   # 02:00 - 03:00: (Median View: 2,874)
+    3: 0.80   # 03:00 - 04:00: (Median View: 9,692)
+    4: 0.60   # 04:00 - 05:00: ĐỈNH KIM CƯƠNG TOÀN NGÀY (Median View: 31,313) -> Tăng tốc 40%
+    5: 0.65   # 05:00 - 06:00: GIỜ VÀNG (Median View: 14,400) -> Tăng tốc 35%
+    6: 0.70   # 06:00 - 07:00: Trước giờ đóng nến ngày 07:00 AM (Median View: 16,728) -> Tăng tốc 30%
+    7: 1.00   # 07:00 - 08:00: Đóng nến ngày, thị trường tái định vị
+    8: 0.85   # 08:00 - 09:00: Châu Á mở app sáng đi làm (Median View: 3,167)
+    9: 0.90   # 09:00 - 10:00: Buổi sáng hoạt động tốt (Median View: 1,934)
+    10: 1.00  # 10:00 - 11:00: Nhịp độ tiêu chuẩn
+    11: 1.10  # 11:00 - 12:00: Chuẩn bị nghỉ trưa
+    12: 1.10  # 12:00 - 13:00: Giờ ăn trưa
+    13: 1.15  # 13:00 - 14:00: Đầu giờ chiều ít biến động
+    14: 1.20  # 14:00 - 15:00: Thanh khoản châu Á giảm
+    15: 1.15  # 15:00 - 16:00: Phiên Âu bắt đầu rục rịch
+    16: 1.10  # 16:00 - 17:00: Phiên Âu vào guồng
+    17: 1.15  # 17:00 - 18:00: Tan tầm
+    18: 1.20  # 18:00 - 19:00: Ăn tối
+    19: 1.40  # 19:00 - 20:00: Bắt đầu tắc nghẽn, giãn cách dần
+    20: 1.80  # 20:00 - 21:00: GIỜ ĐỎ: Lượng bài cạnh tranh tăng vọt, view tụt dốc -> Đăng thưa
+    21: 2.20  # 21:00 - 22:00: TẮC NGHẼN CỰC ĐẠI (54 bài/giờ, Median view chỉ 54) -> Giãn cách cực đại
+    22: 0.85  # 22:00 - 23:00: Dòng tiền Mỹ thức giấc, thoát nghẽn (Median View: 3,244) -> Đẩy bài lại
+    23: 0.80  # 23:00 - 24:00: Đón sóng đêm muộn (Median View: 3,037, Mean: 20,992)
+
+# Cấu hình proxy cho từng account (theo số thứ tự)
+# Format HTTP Proxy: http://user:pass@ip:port
+# Để trống "" nếu không dùng proxy
+proxies:
+  1: "" #Chính
+  2: "http://leduc:leduc@14.224.198.119:50114" #Nam
+  3: "http://leduc:leduc@113.160.166.19:23481" #NGọc
+  4: "http://leduc:leduc@113.160.166.19:23481" #Thắng
+  5: "http://leduc:leduc@113.160.166.19:23481" #Hải
+  6: "http://leduc:leduc@14.241.72.62:55090" #Mệ Nội
+  7: "http://leduc:leduc@14.241.72.62:55090" #Ly (Cookie Only)
+  8: "http://leduc:leduc@14.224.198.119:50114" #Nhi
+  9: "http://leduc:leduc@14.241.72.62:55090" #Sang 1
+  10: "http://leduc:leduc@113.160.166.93:18883" #Chị Linh (Cookie Only)
+  11: "http://leduc:leduc@113.160.166.93:18883" #Khanh Van
+  12: "http://leduc:leduc@113.160.166.93:18883" #XHUNG
+  13: "http://leduc:leduc@113.160.166.93:31294" #Mỹ
+  14: "http://leduc:leduc@113.160.166.93:31294" #Sang2
+  15: "" #Ba
+
+# ==================== POOL NỘI DUNG & PROMPT HỢP NHẤT (UNIFIED POOL) ====================
+# Toàn bộ tài khoản active dùng chung tất cả các nguồn cào (binance, okx, sosovalue, KuCoin, okx_trending)
+# và xoay vòng chung toàn bộ 20 prompt variants từ cả 2 thư mục (group1 + group2).
+content_pool:
+  sources: ["binance", "okx", "sosovalue", "KuCoin", "okx_trending"]
+  prompt_variants_dirs:
+    - "config/prompts/group1"
+    - "config/prompts/group2"
+  prompt_templates_fallback:
+    - "config/gemini_prompt_template_group1.txt"
+    - "config/gemini_prompt_template.txt"
+  # Định cỡ buffer chính xác theo công suất thực tế:
+  # target_ready = max(min_ready_buffer, ceil(active_accounts * planning_hourly_capacity * runway_hours))
+  runway_hours: 1.5
+  min_ready_buffer: 5
+  low_watermark_ratio: 0.35
+
+# ==================== XOAY VÒNG PROMPT (ANTI-DUPLICATE CONTENT) ====================
+prompt_rotation:
+  enabled: true     # false = luôn dùng variant đầu tiên (chế độ debug)
+  avoid_recent: 8   # Không lặp lại 8 variant vừa dùng gần nhất trên pool 20 prompt hợp nhất
+
+# ==================== CẤU HÌNH SPIDER (CÀO DỮ LIỆU) ====================
+spider:
+  # --- OKX Authors ---
+  target_authors:
+
+
+  # --- OKX Trending ---
+  okx_trending_enabled: true
+  trending_top_n: 3
+  trending_posts_per_topic: 6
+  post_with_trending_hashtags: false
+
+
+  # --- Binance Authors ---
+  binance_authors:
+    - username: esla_lens
+      userid: C4OoGOJBjJl0OGxfOEC5GQ
+    - username: square-creator-c632215698c6b
+      userid: Z3tPPSGMsLioMMI8yDcLNw
+    - username: cryptobull009
+      userid: k8YzBvIvyNpqiok55Ntiug
+    - username: duy_tradinginsight
+      userid: 8hV-sic0YMlX07UoJJ8n8Q
+    - username: crypto-irfan
+      userid: zOuQu0keEXjMOrFwP38EJw
+    - username: agora_flux
+      userid: HRKq9WPcNKjldhVvsRTxYA
+    - username: samdada
+      userid: bkeAFgi6id0qBI9TC9jxvw
+    - username: tis_square
+      userid: ZpBTW7MmX0SyXEiLsKJXjA
+    - username: dhrugtest
+      userid: nm5_qUKUeUEqZbA5Btv3hA
+    - username: jujucrypto
+      userid: mkH9ikfJlwErSlpem6rCnw
+    - username: alphaverses
+      userid: 4PuMGnyOsh3GVf7ZckIoOg
+    - username: bnb-belle
+      userid: BQGi-a2QtPBLm4tsarKwjA
+    - username: onchain-insider
+      userid: -gkUJTpZunNKwBWyHA28ug
+    - username: iam_who
+      userid: hQiVUBNm5Pvo0Pw46ikN_A
+    - username: ahs_laroo
+      userid: ReSS728r5pdXXqYraYcehA
+    - username: btcisshit
+      userid: _JFWcL5o-rptU2HQ8ZzYxw
+    - username: salmon-fomotrade
+      userid: kYKsUsM6AKhxQsv74qAy5Q
+    - username: kantcrypto
+      userid: NqCYa3LRfZvRV-kOBdDiCw
+    - username: cryptol-creator
+      userid: D8nAmxJGC_nUNe_lCxAYbw
+    - username: cryptexa_110
+      userid: 9etGrzaKa8lx-7VAzVuEXA
+    - username: hiteshparwani
+      userid: wxuMTv9V9Kyq9uCm-22sRg
+    - username: contentcreator_miin
+      userid: a_a1sFYPrnqAoKXdQbMlgQ
+    - username: airdrop_vn
+      userid: Y3znccnGBOPve58BPExhYA
+    - username: cryptomystique
+      userid: wpt_4g5Q39HJCn-X6FV2JA
+    - username: shahidakausar9
+      userid: 45T3Dt1gZ6AF5XWyPpFy1g
+    - username: ducktradingno1
+      userid: _bCG1grA6dGfMwZQ-WL2Qw
+    - username: thetradroom
+      userid: -mFVqme6mJyul4i4quhc8A
+    - username: crypto_herooo
+      userid: BFZJg2H5txxzsWRQ5ta3Eg
+    - username: tienad
+      userid: pJnClPcg06h6VUiBPLJoug
+    - username: crazy-savage
+      userid: 5oylihATx9E7qbmNbR0WRw
+    - username: win_x
+      userid: aSWIdpdi6UUQUIsvtxv1lQ
+    - username: immrape
+      userid: vN2CSNeR7vyGHQjohnTJ4w
+    - username: cointric_usa
+      userid: 99A49xnlKm3LzSrMBY1BWg
+    - username: panda_traders
+      userid: zjjscsVkXUD3qXox3_WdmQ
+    - username: utoday_en
+      userid: JakEWkmk7QMCUiw-xNM4cw
+    - username: alphanodex
+      userid: SixjuvOBR2ofqbali8HkSw
+    - username: arenar
+      userid: -3LX6FNaC7m9Mx7JksChpg
+    - username: coininsight
+      userid: 3QCTQWIAS1xPJUNMCMq1Kw
+    - username: san_02
+      userid: 12KNXrgjH3sIefAmNUQEdw
+    - username: enemy
+      userid: i5zTMnDAUUYCM3DiuyhR_A
+    - username: ghostwriter
+      userid: OhqmnNxg8OuAZu3JecC6iw
+    - username: cas_abb
+      userid: 6l5EIU7qkxLVyDA8q8cfxg
+    - username: professor_jaxon
+      userid: 8yHr1F-U5v0yneejgAHL3w
+    - username: cryptonexus_btc
+      userid: GSrptD6ux6W-8v8tE4-IuQ
+    - username: cryptomechanic
+      userid: VAYGRi3YqX6T-PlzOHmeqQ
+    - username: emilyinsight
+      userid: OuXw_gL4lLVth1nh6pZj5Q
+    - username: bigcoinvietnam
+      userid: YfykuIk8ed0_asDsxvG4YQ
+    - username: square-creator-8b1216441
+      userid: h8fNTpkbszgO_e2DLu4PHw
+
+  # --- SoSoValue Crawler ---
+  soso_enabled: true
+
+  # Số luồng chạy song song tối đa
+  max_workers: 3
+
+  # Delay giữa mỗi tác giả trong cùng 1 luồng (Giây)
+  delay_between_authors: 2
+
+  # Số lần thử lại tối đa khi gặp lỗi HTTP hoặc Rate Limit
+  max_retries: 3
+
+  # Thời gian chờ giữa mỗi lần retry (Giây, sẽ nhân đôi mỗi lần - Exponential Backoff)
+  retry_delay: 5
+
+  # Khoảng thời gian giữa các chu kỳ crawl (Phút)
+  crawl_interval_minutes: 10
+
+  # Nếu chưa từng crawl tác giả này → mặc định lấy bài trong X giờ gần nhất
+  default_lookback_hours: 2
+
+  # --- ADAPTIVE QUEUE CONTROL & GEMINI QUOTA OPTIMIZATION ---
+  # Buffer 'ready' được định cỡ tự động theo:
+  #   target_ready = max(min_ready_buffer, ceil(active_accounts * planning_hourly_capacity * runway_hours))
+  # Khi ready + crawled >= target_ready -> tự động dừng cào bài mới.
+  # Khi ready >= target_ready -> tự động dừng gọi Gemini (tiết kiệm 100% token thừa).
+  runway_hours: 1.5
+  min_ready_buffer: 5
+  low_watermark_ratio: 0.35
+  # Có thể ép cứng trần buffer nếu muốn (mặc định để tự động theo số account active):
+  # max_ready_buffer: 10
+
+
+# ==================== CẤU HÌNH FARMING (ORGANIC ENGAGEMENT ENGINE) ====================
+farming:
+  enabled: true
+
+  # Danh sách account dùng cho farming (số tương ứng cookies/account{N}.json)
+  accounts: [1]
+
+  # --- SESSION CONTROL ---
+  posts_per_session: 60          # ~60 views/session → 1 session ≈ 12-18 phút
+  min_interval_seconds: 7        # Tối thiểu 7s giữa mỗi bài → ~500 views/h
+
+  # --- NHỊP SINH HỌC (CIRCADIAN REST) ---
+  session_break_minutes: [3, 8]        # Nghỉ ngắn giữa sessions [min, max] Gaussian
+  sessions_before_long_break: 5        # Sau N sessions → nghỉ dài
+  long_break_minutes: [10, 20]         # Nghỉ dài [min, max] Gaussian
+
+  # --- TỈ LỆ TƯƠNG TÁC (RELAXED — tăng tần suất, ưu tiên followed) ---
+  # Followed authors: gấp đôi tỷ lệ tương tác so với trước
+  # Unfollowed authors: nới lỏng ~60-70% so với trước
+  followed_author:
+    skip_rate: 0.02
+    like_rate: 0.30
+    comment_rate: 0.25
+    deep_dive_rate: 0.10
+
+  unfollowed_author:
+    skip_rate: 0.05
+    like_rate: 0.08
+    comment_rate: 0.06
+    follow_rate: 0.02
+    deep_dive_rate: 0.05
+
+  # --- GAUSSIAN DELAYS [mean, std, min] ---
+  delays:
+    scroll:         [1.2, 0.4, 0.3]
+    read_short:     [3.0, 1.0, 1.0]
+    read_long:      [5.0, 1.5, 2.0]
+    after_like:     [0.8, 0.2, 0.3]
+    after_comment:  [3.0, 1.0, 1.5]
+    after_follow:   [1.0, 0.3, 0.3]
+    deep_dive_scan: [2.0, 0.6, 0.5]
+    deep_dive_read: [3.0, 1.0, 1.0]
+
+  # --- AI COMMENT ---
+  # Provider cho farming comment: "gemma" | "gemini_proxy" | "gemini_direct"
+  # Dùng đúng provider đã cấu hình trong config/gemini.yaml
+  # Chỉ cần chỉnh 1 dòng này để đổi model/api cho farming comment
+  ai_provider: "gemini_proxy"
+
+  comment_prompt_file: "config/farming_comment_prompt.txt"
+  comment_max_length: 150
+  comment_min_length: 5
+
+  # --- DEEP DIVE ---
+  deep_dive:
+    max_old_posts: 2
+    like_old_post_rate: 0.15
+
+  # --- TRÍ NHỚ NGẮN HẠN (Short-term Memory) — RELAXED ---
+  short_term_memory:
+    enabled: true
+    like_cooldown_hours: 0.5         # Nới lỏng: 30 phút (trước: 1h)
+    comment_cooldown_hours: 1.0      # Nới lỏng: 1h (trước: 2h)
+    deep_dive_cooldown_hours: 3.0    # Nới lỏng: 3h (trước: 6h)
+
+  # --- ƯU TIÊN KOL CÓ NHIỀU VIEW & CHƯA FOLLOW ---
+  kol_focus:
+    enabled: true
+    high_view_threshold: 5000              # KOL là người có view post > mức này
+    multiplier_high_view: 2.0             # Nhân đôi tỷ lệ tương tác (like, comment, follow) cho KOL
+    multiplier_high_view_unfollowed: 3.0  # Nhân ba tỷ lệ tương tác nếu đó là KOL mà mình CHƯA FOLLOW

@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Data folder (Database, images, state files)
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Tests & Prompt Tester
+prompt_tester/
+docs/test_*.txt
+test_*.py
+
+# Heavy Binaries & Reverse Engineering artifacts
+OKX-APP/
+work/
+tools/
+*.apk
+*.zip
+*.jar
+*.tgz
+*.tar.gz
+*.so
+*.dex
+
+# Session transcripts / Large markdown exports
+Tối_ưu_lịch_đăng_bài_crypto_*.md
+
+# IDE & OS metadata
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

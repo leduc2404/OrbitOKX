@@ -1,0 +1,153 @@
+# ============================================================
+# CẤU HÌNH API PROCESSING - 3 Provider Architecture
+# ============================================================
+# active_provider: "gemma" | "gemini_proxy" | "gemini_direct"
+# Mỗi provider hoàn toàn độc lập: key, model, rate limit, threads
+# ============================================================
+
+active_provider: "gemini_proxy"
+
+
+# ============================================================
+# GEMMA - Gọi trực tiếp Google API (google.genai Client)
+# ĐÃ ỔN ĐỊNH - KHÔNG CẦN CAN THIỆP
+# ============================================================
+gemma:
+  enabled: true
+  api_keys:
+    - "AIzaSyDQSguMDJXjHckj-yZpEgzzxorlSi3X65k" #23sdf | leducisme@gmail.com
+    - "AIzaSyDSaYAHD5FilYZNbMUSQO6uNiM2MGmdUIk" #AEREA | leducisme@gmail.com
+    - "AIzaSyDy5plFEzJaiSe2dluAg3FUUeXJxvhVyQY" #My First Project | leducisme@gmail.com
+    - "AIzaSyAuTo0bgaqOwlSkXQ4SFA_v4Q2YOOd4mbw" #Veo3 | leducisme@gmail.com
+    - "AIzaSyAy0PxeJvFR130u65dSWaPoR_nFlc_k8XM" #Album | leducisme@gmail.com
+    - "AIzaSyD5y8w154-9yd8jQ-GiKG8iLiEaV0ZlLVg" #My First Project1 | leducisme@gmail.com
+    - "AIzaSyCCOHJBscF5ScClTB6okJQ72nXqNKl71oc" #Square | led06276@gmail.com
+    - "AIzaSyA7EEkXm4iF2WgPoAnG6VCq3f6tYkL4Wjk" #Square2 | led06276@gmail.com
+    - "AIzaSyDWgoa3Zb1eodL9ydWqzQ0x2n8-iPce39Q" #Binance Square | led06276@gmail.com
+    - "AIzaSyB-jm83O9DWai9xDbyKBl3-uNT8Uxi26uM" #My First Project | led06276@gmail.com
+    - "AIzaSyA4vNcFtpkRUsHtCju8tRtFR7lNct1SAz0" #ORBIT 1 | led06276@gmail.com
+    - "AIzaSyBgCdq5mmCNdtypku170j5D9EVYsan-6z8" #Square | leduc.xbt1@gmail.com
+    - "AIzaSyAUE37yDK-Scs0accQjcLtb8TheNPf13io" #Gemini API | leduc.xbt1@gmail.com
+    - "AIzaSyB-86M2M3nSYuMWwmQlcLH_I1HvvCGC5mM" #Binance-Alpha | leduc.xbt1@gmail.com
+    - "AIzaSyCO6TplaSwNUehg89Kl-AHPV4j9718OBro" #TIKTOK CNGHE | leduc.xbt1@gmail.com
+    - "AIzaSyCDucVyxttgQycuNTIVHm3V6aXu7L8CcKE" #ORBIT | leduc.xbt1@gmail.com
+    - "AIzaSyAt9O1lOQHdfFFGkZNzg2EFw_H6NYdJPL4" #ORBIT2 | leduc.xbt1@gmail.com
+    - "AIzaSyDoBNF842jiutXa5bSllnIQkoQHt0Tj-cQ" #Defaut Gemini Project | lqnhii2607@gmail.com
+    - "AIzaSyBWZI-Lxa3CpCpHSm6p2WOZm1CWVo18Wxo" #API1 | lqnhii2607@gmail.com
+    - "AIzaSyAjoAYNRgI8MMb9kkzfM-LTf4hQggg1Dko" #ORBIT | lqnhii2607@gmail.com
+    - "AIzaSyDYJ_niDm29b_z_idfM-GEe3CWhkRrOwiQ" #ORBIT2 | lqnhii2607@gmail.com
+    - "AIzaSyD2-Jb_rxT1DarshAi-WaEMDdo7Kh5kPCA" #ORBIT3 | lqnhii2607@gmail.com
+    - "AIzaSyCJoV57LBVFmcaujDne2DxIFbx8UacPiCQ" #lfsf | leduc.trade@gmail.com
+    - "AIzaSyCCpobo_-mWbt7DDmF2bSFS1foq_8u_0u8" #TTSS | leduc.trade@gmail.com
+    - "AIzaSyCXB3WJGa3MuiqsnFMVQA4kUDO64_4zg1Q" #ORBIT | leduc.trade@gmail.com
+    - "AIzaSyCNEiQlS1gjVKKf3xNKl8Fa_TOzoFABedw" #ORBIT2 | leduc.trade@gmail.com
+    - "AIzaSyAhYeVn2Pws-NzSnN_J3hSaSTI8BDu-17k" #ORBIT3 | leduc.trade@gmail.com
+    - "AIzaSyARXprHgCLA9sz6jMyqcGffeNxkuooMbuE" #Defaut Gemini Project | huuthangvanhoa@gmail.com
+    - "AIzaSyBvUyjfgnliUJF8zklhnBcrTA73hb_3ftM" #VATLT | huuthangvanhoa@gmail.com
+    - "AIzaSyCJ7UeIoVm2Fon-_Vx7dQAgt9cgPFA69e0" #ORBIT | huuthangvanhoa@gmail.com
+    - "AIzaSyDVydNlFc-nPs070jkLS8u3zLV6FkOqL_A" #ORBIT2 | huuthangvanhoa@gmail.com
+    - "AIzaSyAw7h-Rb0fHY_4OBgubwdTXxfsBXSEYPFo" #ORBIT3 | huuthangvanhoa@gmail.com
+  # Model cascade: thử primary → fallback khi 429/quota
+  # priority 1 = thử trước, priority 2 = fallback
+  models:
+    - name: "gemma-4-31b-it"
+      rpm: 15
+      tpm: 99999999
+      rpd: 1500
+      priority: 1
+    - name: "gemma-3-27b-it"
+      rpm: 15
+      tpm: 99999999
+      rpd: 1500
+      priority: 2             # Fallback model
+
+  rate_limiting:
+    rpm_per_key: 15             # Sliding Window: requests per minute per key
+    penalty_cooldown: 60        # Penalty duration khi bị 429 (giây)
+    tpm_per_key: 99999999       # Tokens per minute per key
+    rpd_per_key: 1500           # Requests per day per key
+    model_fallback_enabled: true  # Bật auto-fallback khi primary 429
+    all_keys_exhausted_wait: 15   # Đợi N giây khi TẤT CẢ keys penalty
+
+  processing:
+    parallel_mode: true         # Mỗi key 1 luồng độc lập   
+    max_workers: null            # null = tự tính = số API keys   
+    retry_attempts: 3   
+    retry_delay: 2              # Delay giữa các retry (giây)   
+    request_timeout: 60         # Timeout cho mỗi API call (giây)   
+    model_cooldown_seconds: 40  # Cooldown khi model hết quota   
+   
+  generation:   
+    temperature: 0.65   
+    top_p: 0.8   
+    top_k: 40   
+    max_output_tokens: 2048   
+   
+
+# ============================================================
+# GEMINI PROXY - Gọi qua proxy trung gian (OpenAI-compatible)
+# Dùng google.generativeai + transport="rest" + custom endpoint
+# ============================================================
+gemini_proxy:
+  enabled: true
+  
+  api_key: "sk-ffcdfc36699c4519a730add352403878"
+  endpoint: "http://localhost:8045/v1"
+  model: "gemini-3-flash"
+
+  rate_limiting:
+    min_delay_seconds: 1        # Delay tối thiểu giữa các request
+    cooldown_seconds: 40        # Cooldown khi model hết quota
+
+  processing:
+    max_workers: 10              # Số luồng xử lý đồng thời
+    retry_attempts: 3
+    retry_delay: 2
+    request_timeout: 60
+
+  generation:
+    temperature: 0.8
+    top_p: 0.8
+    top_k: 40
+    max_output_tokens: 2048
+
+
+# ============================================================
+# GEMINI DIRECT - Gọi trực tiếp Google API (không qua proxy)
+# Dùng google.genai Client (giống Gemma nhưng model Gemini)
+# ============================================================
+gemini_direct:
+  enabled: false
+  
+  api_keys: []
+  model: "gemini-2.5-flash"
+
+  rate_limiting:
+    rpm_per_key: 10             # Requests per minute per key
+    penalty_cooldown: 60        # Penalty khi bị 429
+
+  processing:
+    parallel_mode: true         # true = mỗi key 1 luồng, false = round-robin
+    max_workers: null            # null = tự tính = số API keys
+    retry_attempts: 3
+    retry_delay: 2
+    request_timeout: 60
+    cooldown_seconds: 40
+
+  generation:
+    temperature: 0.65
+    top_p: 0.8
+    top_k: 40
+    max_output_tokens: 2048
+
+
+# ============================================================
+# PROCESSING CHUNG (áp dụng cho mọi provider)
+# ============================================================
+processing:
+  include_images: false
+
+  # Post-level retry (xử lý lại bài viết bị lỗi)
+  max_post_retries: 3
+  retry_failed_in_next_cycle: true
+  failed_post_cooldown_minutes: 5
