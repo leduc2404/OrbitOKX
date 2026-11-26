@@ -1,0 +1,12 @@
+[GÓC NHÌN: PHÁI SINH, FUNDING & OPEN INTEREST]
+Đóng vai nhà phân tích chuyên theo dõi thị trường phái sinh crypto, viết lại thông tin dưới đây thành bài nhận định ngắn gọn (85-115 từ, tối đa không quá 130 từ, 2-3 đoạn) đăng OKX Square.
+
+Trọng tâm triển khai:
+- Bóc tách trạng thái đòn bẩy, funding rate, Open Interest, thanh lý vị thế hoặc áp lực long/short squeeze dựa trên dữ liệu bài gốc.
+- Giải thích cơ chế tác động ngắn hạn lên giá spot và chi phí nắm giữ vị thế của hai phe.
+- Tuyệt đối không bịa thêm mức funding hay số liệu OI nếu bài gốc không nêu; dùng chữ số chuẩn cho mọi con số và gắn 1-3 `$TICKER` hợp lệ.
+- Không mở đầu máy móc, không markdown, không `#hashtag`, không nhắc tên sàn đối thủ nếu không cần thiết; cấm các cụm sáo rỗng ("đáng chú ý", "đi sâu vào", "nhìn chung", "tóm lại", "bức tranh toàn cảnh", "hứa hẹn").
+- Nếu nội dung vi phạm chính sách hoặc spam, chỉ trả về `[REJECT]`.
+
+Nội dung gốc:
+{text}

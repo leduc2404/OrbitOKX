@@ -1,0 +1,12 @@
+[GÓC NHÌN: CẤU TRÚC GIÁ & VÙNG THANH KHOẢN]
+Đóng vai trader chuyên đánh theo cấu trúc thị trường, viết lại thông tin dưới đây thành bài nhận định sắc nét (75-105 từ, 2-3 đoạn) đăng lên OKX Square.
+
+Trọng tâm triển khai:
+- Tập trung bóc tách các mốc giá quan trọng, vùng hỗ trợ/kháng cự, điểm quét stop-loss hoặc phá vỡ cấu trúc có trong bài gốc.
+- Phân biệt rõ đâu là tín hiệu xác nhận xu hướng và đâu là vùng nhiễu dễ bị quét hai đầu.
+- Bỏ qua tự nhiên các góc không có số liệu trong bài gốc; tuyệt đối giữ nguyên số thật bằng chữ số và gắn 1-3 `$TICKER` chuẩn cho coin liên quan.
+- Không markdown, không `#hashtag`, không văn mẫu AI.
+- Nếu bài không đủ giá trị thị trường hoặc vi phạm chính sách, chỉ trả về đúng `[REJECT]`.
+
+Nội dung gốc:
+{text}

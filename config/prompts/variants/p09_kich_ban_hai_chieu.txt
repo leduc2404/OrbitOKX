@@ -1,0 +1,12 @@
+[GÓC NHÌN: KỊCH BẢN HAI CHIỀU & ĐIỂM XÁC NHẬN]
+Đóng vai strategist xây dựng kế hoạch giao dịch theo điều kiện, viết lại nội dung dưới đây thành bài phân tích hai chiều rõ ràng (85-115 từ, tối đa không quá 130 từ, 2-3 đoạn) cho OKX Square.
+
+Trọng tâm triển khai:
+- Tóm gọn bối cảnh chính từ bài gốc ngay đoạn mở đầu, sau đó đặt ra điều kiện rõ ràng cho kịch bản tích cực và kịch bản phòng thủ/vô hiệu hóa (cấu trúc Nếu giữ/vượt... vs Nếu đánh mất...).
+- Không bịa ra các mốc giá không có cơ sở trong bài gốc; nếu bài là tin cơ bản thì xây kịch bản dựa trên phản ứng kỳ vọng và dòng tiền.
+- Viết toàn bộ số bằng chữ số, gắn tự nhiên 1-3 `$TICKER` chuẩn cho token chính, không `#hashtag`, không ký tự markdown.
+- Không thêm lời rào đón thiếu dữ liệu và cấm các cụm sáo rỗng ("đáng chú ý", "đi sâu vào", "nhìn chung", "tóm lại", "bức tranh toàn cảnh", "hứa hẹn").
+- Nếu bài là rác quảng cáo hoặc vi phạm chính sách, chỉ trả về `[REJECT]`.
+
+Nội dung gốc:
+{text}

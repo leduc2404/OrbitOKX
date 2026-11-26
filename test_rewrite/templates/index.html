@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OKXSquare // Prompt Tuning Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/studio.css') }}" />
+</head>
+<body>
+  <div class="studio-shell">
+    <!-- ==================== TOP INSTRUMENT BAR ==================== -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand-mark">
+          <span class="brand-sigil"></span>
+          <div class="brand-text">
+            <span class="brand-title">OKXSQUARE</span>
+            <span class="brand-sub">PROMPT LAB</span>
+          </div>
+        </div>
+
+        <div class="topbar-divider"></div>
+
+        <!-- 3 CORE PROMPT TUNING MODES -->
+        <nav class="mode-nav" id="modeNav" aria-label="Chế độ test prompt">
+          <button type="button" class="mode-btn active" data-mode="single">
+            <span class="mode-num">1</span>
+            <span>1 Bài × 1 Prompt</span>
+          </button>
+          <button type="button" class="mode-btn" data-mode="matrix">
+            <span class="mode-num">2</span>
+            <span>1 Bài × 10 Prompt</span>
+          </button>
+          <button type="button" class="mode-btn" data-mode="rotate">
+            <span class="mode-num">3</span>
+            <span>Xoay đủ 10 Prompt</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="topbar-right">
+        <button type="button" class="provider-pill" id="headerProviderPill" title="Click để Ping kiểm tra kết nối endpoint">
+          <span class="status-dot idle" id="pingDot"></span>
+          <span class="mono" id="headerProviderLabel">loading...</span>
+          <span class="pill-latency mono" id="headerPingLatency"></span>
+        </button>
+
+        <button type="button" class="icon-btn" id="btnToggleConfig" title="Mở cấu hình Provider, Endpoint, API Key, Temp, Top-P từ gemini_config.yaml">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Config YAML</span>
+        </button>
+
+        <div class="topbar-divider"></div>
+
+        <!-- Storage RAM / DISK Switcher -->
+        <div class="storage-control">
+          <div class="segmented" id="storageModeSwitch">
+            <button type="button" class="seg-btn active" data-mode="ram" title="Lưu crawl trong RAM">RAM</button>
+            <button type="button" class="seg-btn" data-mode="disk" title="Lưu crawl ra ổ cứng (test_rewrite/cache/posts_store.json)">Ổ CỨNG</button>
+          </div>
+          <button type="button" class="icon-btn" id="btnStorageMenu" title="Đồng bộ RAM/Ổ cứng, Export, Import, Dọn bộ nhớ">
+            <span class="mono" id="headerPostCount">0 bài</span>
+            <span>▾</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Collapsible Config Drawer (read from config/gemini_config.yaml) -->
+    <section class="config-drawer hidden" id="configDrawer">
+      <div class="config-drawer-head">
+        <div class="config-title-group">
+          <span class="kicker">YAML</span>
+          <strong>Cấu hình Provider &amp; Tham số sinh văn bản</strong>
+          <span class="muted-tag mono" id="yamlActiveTag"></span>
+        </div>
+        <div class="config-head-actions">
+          <button type="button" class="btn-xs" id="btnPingProvider">Ping Endpoint</button>
+          <button type="button" class="btn-xs" id="btnReloadConfig">Reload YAML</button>
+          <button type="button" class="btn-xs" id="btnResetYamlDefaults">Khôi phục mặc định</button>
+          <button type="button" class="icon-close" id="btnCloseConfig">✕</button>
+        </div>
+      </div>
+
+      <div class="config-grid">
+        <label class="cfg-field">
+          <span>Provider</span>
+          <select id="cfgProvider" class="mono">
+            <option value="gemini_proxy">gemini_proxy</option>
+            <option value="gemma">gemma</option>
+            <option value="gemini_direct">gemini_direct</option>
+          </select>
+        </label>
+
+        <label class="cfg-field">
+          <span>Model</span>
+          <input type="text" id="cfgModel" class="mono" list="modelSuggestions" />
+          <datalist id="modelSuggestions"></datalist>
+        </label>
+
+        <label class="cfg-field span-2">
+          <span>Endpoint</span>
+          <input type="text" id="cfgEndpoint" class="mono" placeholder="http://127.0.0.1:8045/v1" />
+        </label>
+
+        <label class="cfg-field span-2">
+          <span>API Key từ YAML <em class="muted-tag" id="cfgKeyCountTag"></em></span>
+          <select id="cfgKeyIndex" class="mono"></select>
+        </label>
+
+        <label class="cfg-field span-2">
+          <span>API Key Override (chỉ tạm trên RAM, không sửa YAML)</span>
+          <input type="password" id="cfgApiKeyOverride" class="mono" placeholder="Để trống = dùng key trong gemini_config.yaml" autocomplete="off" />
+        </label>
+
+        <label class="cfg-field">
+          <span>Temperature: <strong class="mono" id="valTempLabel">0.95</strong></span>
+          <div class="range-pair">
+            <input type="range" id="rangeTemp" min="0" max="2" step="0.05" value="0.95" />
+            <input type="number" id="cfgTemp" class="mono num-sm" min="0" max="2" step="0.05" value="0.95" />
+          </div>
+        </label>
+
+        <label class="cfg-field">
+          <span>Top-P: <strong class="mono" id="valTopPLabel">0.95</strong></span>
+          <div class="range-pair">
+            <input type="range" id="rangeTopP" min="0" max="1" step="0.05" value="0.95" />
+            <input type="number" id="cfgTopP" class="mono num-sm" min="0" max="1" step="0.05" value="0.95" />
+          </div>
+        </label>
+
+        <label class="cfg-field">
+          <span>Top-K / Max Tokens</span>
+          <div class="two-inline">
+            <input type="number" id="cfgTopK" class="mono" min="1" max="100" value="40" title="top_k" />
+            <input type="number" id="cfgMaxTokens" class="mono" min="128" max="8192" step="64" value="2048" title="max_output_tokens" />
+          </div>
+        </label>
+
+        <label class="cfg-field">
+          <span>Timeout (s) / Luồng đồng thời (1–20)</span>
+          <div class="two-inline">
+            <input type="number" id="cfgTimeout" class="mono" min="5" max="300" value="60" title="Request timeout (s)" />
+            <input type="number" id="cfgConcurrency" class="mono" min="1" max="20" value="10" title="Số luồng song song cho Mode 2 & 3" />
+          </div>
+        </label>
+
+        <div class="cfg-field span-4 cfg-switches">
+          <label class="toggle-inline">
+            <input type="checkbox" id="cfgEnablePrescreen" checked />
+            <span>Bật Pre-screen từ khóa nhạy cảm (chặn sớm chính trị/Fed/airdrop)</span>
+          </label>
+          <label class="toggle-inline">
+            <input type="checkbox" id="cfgEnableCleanOutput" checked />
+            <span>Bật _clean_output (gỡ dấu *, lọc prefix AI &amp; phát hiện refusal)</span>
+          </label>
+          <span class="mono muted-tag" id="yamlMetaInline"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Async Job Progress Strip -->
+    <div class="job-banner hidden" id="jobBanner">
+      <div class="job-banner-left">
+        <span class="spinner-xs"></span>
+        <span class="mono" id="jobBannerText">Đang xử lý...</span>
+      </div>
+      <div class="job-bar-track">
+        <div class="job-bar-fill" id="jobBarFill" style="width: 0%"></div>
+      </div>
+      <span class="mono job-pct" id="jobPct">0%</span>
+      <button type="button" class="btn-danger-xs hidden" id="btnCancelJob">■ Dừng</button>
+    </div>
+
+    <!-- ==================== MAIN WORKBENCH ==================== -->
+    <div class="workbench">
+      <!-- LEFT SIDEBAR: TABBED (BÀI VIẾT | 10 PROMPTS) -->
+      <aside class="sidebar">
+        <div class="sidebar-tabs" id="sidebarTabs">
+          <button type="button" class="stab active" data-stab="posts">
+            Bài viết <span class="mono chip-xs" id="sidebarPostCount">0</span>
+          </button>
+          <button type="button" class="stab" data-stab="prompts">
+            10 Prompts <span class="mono chip-xs" id="sidebarDraftCount">10</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: ARTICLES + COMPACT CRAWL PANEL -->
+        <div class="stab-pane active" id="stabPosts">
+          <div class="side-toolbar">
+            <button type="button" class="btn-crawl-sm" id="btnToggleCrawlBox">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9"/></svg>
+              <span>Crawl bài</span>
+            </button>
+            <button type="button" class="btn-ghost-sm" id="btnOpenManualModal">+ Nhập tay</button>
+          </div>
+
+          <div class="crawl-box hidden" id="crawlBox">
+            <div class="source-row" id="crawlSourcePills">
+              <label class="source-pill active"><input type="checkbox" value="binance" checked /><span>Binance</span></label>
+              <label class="source-pill active"><input type="checkbox" value="okx" checked /><span>OKX</span></label>
+              <label class="source-pill"><input type="checkbox" value="kucoin" /><span>KuCoin</span></label>
+              <label class="source-pill"><input type="checkbox" value="sosovalue" /><span>SoSoValue</span></label>
+            </div>
+            <div class="crawl-mini-grid">
+              <label class="mini-field">
+                <span>Số bài/nguồn</span>
+                <input type="number" id="crawlMaxPosts" value="10" min="1" max="200" />
+              </label>
+              <label class="mini-field">
+                <span>Lookback (giờ)</span>
+                <input type="number" id="crawlLookback" value="48" min="1" max="720" />
+              </label>
+            </div>
+            <div class="crawl-extra hidden" id="binanceExtraBox">
+              <div class="crawl-extra-hdr">
+                <span>Binance Square</span>
+                <small>Mặc định tự crawl News Feed</small>
+              </div>
+              <input type="text" id="crawlBinanceKeywords" placeholder="Lọc từ khóa/coin (VD: BTC, ETH — trống = tất cả)" />
+              <input type="text" id="crawlBinancePostIds" placeholder="Post ID / URL trực tiếp (tùy chọn)" />
+              <input type="text" id="crawlBinanceAuthors" placeholder="Binance UID (tùy chọn)" />
+            </div>
+            <div class="crawl-extra hidden" id="okxExtraBox">
+              <div class="crawl-extra-hdr">
+                <span>OKX Orbit Hashtag</span>
+                <button type="button" class="btn-xs" id="btnLoadOkxTopics" title="Tải danh sách Hot Topic trực tiếp từ OKX Orbit">↻ Hot Topic</button>
+              </div>
+              <div class="tag-chip-row" id="okxPresetChips">
+                <button type="button" class="tag-chip active" data-okx-tag="BTC">#BTC</button>
+                <button type="button" class="tag-chip active" data-okx-tag="ETH">#ETH</button>
+                <button type="button" class="tag-chip active" data-okx-tag="SOL">#SOL</button>
+                <button type="button" class="tag-chip" data-okx-tag="OKB">#OKB</button>
+                <button type="button" class="tag-chip" data-okx-tag="XRP">#XRP</button>
+                <button type="button" class="tag-chip" data-okx-tag="DOGE">#DOGE</button>
+                <button type="button" class="tag-chip" data-okx-tag="SUI">#SUI</button>
+                <button type="button" class="tag-chip" data-okx-tag="PEPE">#PEPE</button>
+              </div>
+              <div class="tag-chip-row hidden" id="okxTrendingChips"></div>
+              <input type="text" id="crawlOkxHashtags" placeholder="Thêm hashtag / Topic ID (VD: TON, LINK, AAVE)" />
+              <div class="okx-opts-row">
+                <select id="crawlOkxType" aria-label="Loại timeline OKX">
+                  <option value="1">Mới nhất (type=1)</option>
+                  <option value="2">Tin &amp; Media (type=2)</option>
+                </select>
+                <label class="toggle-inline sm" title="Crawl thêm bài từ các Hot Topic đang xu hướng trên OKX">
+                  <input type="checkbox" id="crawlOkxTrending" />
+                  <span>Hot</span>
+                </label>
+                <label class="toggle-inline sm" title="Crawl thêm bài từ OKX Orbit Public Feed">
+                  <input type="checkbox" id="crawlOkxFeed" />
+                  <span>Feed</span>
+                </label>
+              </div>
+              <input type="text" id="crawlOkxAuthors" placeholder="OKX Author ID (tùy chọn)" />
+            </div>
+            <div class="crawl-foot">
+              <label class="toggle-inline sm">
+                <input type="checkbox" id="crawlIgnoreWatermark" checked />
+                <span>Bỏ mốc cũ</span>
+              </label>
+              <button type="button" class="btn-primary btn-sm" id="btnStartCrawl">Crawl ngay</button>
+            </div>
+          </div>
+
+          <div class="queue-filter-bar">
+            <input type="search" id="queueSearch" placeholder="Tìm bài viết..." />
+            <select id="filterSource" aria-label="Lọc nguồn">
+              <option value="all">Mọi nguồn</option>
+              <option value="kucoin">KuCoin</option>
+              <option value="sosovalue">SoSoValue</option>
+              <option value="binance">Binance</option>
+              <option value="okx">OKX</option>
+              <option value="manual">Thủ công</option>
+            </select>
+          </div>
+
+          <div class="queue-list" id="queueList">
+            <div class="empty-box">
+              <p>Chưa có bài viết.</p>
+              <span>Nhấn <strong>Crawl bài</strong> (lấy Binance / OKX vào RAM) hoặc <strong>+ Nhập tay</strong>.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: ALL 20 PROMPTS EXPLORER & CHECKBOXES -->
+        <div class="stab-pane" id="stabPrompts">
+          <div class="prompt-select-bar">
+            <button type="button" class="btn-xs" data-psel="all">Cả 20</button>
+            <button type="button" class="btn-xs" data-psel="g1">G1</button>
+            <button type="button" class="btn-xs" data-psel="g2">G2</button>
+            <button type="button" class="btn-xs" data-psel="none">Bỏ</button>
+            <button type="button" class="btn-primary btn-xs-pad hidden" id="btnSaveAllDrafts" title="Lưu toàn bộ các prompt nháp đã sửa xuống file .txt">💾 Lưu nháp</button>
+          </div>
+          <div class="prompt-rail-list" id="promptRailList"></div>
+        </div>
+      </aside>
+
+      <!-- ==================== MAIN STAGE ==================== -->
+      <main class="stage">
+        <!-- Contextual Action Ribbon -->
+        <section class="action-ribbon">
+          <div class="ribbon-left">
+            <!-- Mode 1 Controls -->
+            <div class="mode-ctrl active" data-for-mode="single">
+              <label class="inline-select-wrap">
+                <span class="kicker">PROMPT</span>
+                <select id="singlePromptSelect"></select>
+              </label>
+              <button type="button" class="btn-ghost-sm active-toggle" id="btnToggleInlineEditor" title="Ẩn / Hiện trình sửa Prompt trực tiếp">
+                ✎ Trình sửa Prompt
+              </button>
+            </div>
+
+            <!-- Mode 2 Controls -->
+            <div class="mode-ctrl" data-for-mode="matrix">
+              <label class="inline-select-wrap">
+                <span class="kicker">PHẠM VI</span>
+                <select id="matrixScopeSelect">
+                  <option value="all">Tất cả 10 Prompt (G1 + G2)</option>
+                  <option value="group1">Chỉ Group 1 — Thực chiến (5)</option>
+                  <option value="group2">Chỉ Group 2 — Chuyên sâu (5)</option>
+                  <option value="checked">Prompt đang tick chọn (0)</option>
+                </select>
+              </label>
+              <span class="mono muted-tag" id="matrixTargetPostHint">Chọn 1 bài ở cột trái</span>
+            </div>
+
+            <!-- Mode 3 Controls -->
+            <div class="mode-ctrl" data-for-mode="rotate">
+              <label class="inline-select-wrap">
+                <span class="kicker">XOAY VÒNG</span>
+                <select id="rotateScopeSelect">
+                  <option value="all">Xoay đủ 10 Prompt (G1 + G2)</option>
+                  <option value="group1">Xoay 5 Prompt Group 1</option>
+                  <option value="group2">Xoay 5 Prompt Group 2</option>
+                  <option value="checked">Prompt đang tick chọn (0)</option>
+                </select>
+              </label>
+              <span class="mono readiness-pill" id="rotateReadinessPill">0 bài / 10 prompt</span>
+              <label class="toggle-inline sm" title="Nếu số bài ít hơn số prompt (VD: 8 bài / 10 prompt), tự lấy lại bài đầu để chạy phủ đủ 10/10 prompt">
+                <input type="checkbox" id="chkRotateFillAll" checked />
+                <span>Lặp bài cho đủ prompt</span>
+              </label>
+              <button type="button" class="btn-xs hidden" id="btnCrawlToFill20">+ Crawl thêm</button>
+            </div>
+          </div>
+
+          <div class="ribbon-right">
+            <span class="mono param-chip" id="ribbonParamSummary" title="Click để mở Config YAML">T=0.95 · P=0.95</span>
+
+            <!-- Direct Concurrency Selector on Action Ribbon -->
+            <label class="ribbon-conc-wrap" id="ribbonConcWrap" title="Số luồng xử lý song song cho Mode 2 &amp; Mode 3">
+              <span class="kicker">LUỒNG</span>
+              <select id="ribbonConcurrency" class="mono ribbon-conc-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="8">8</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+
+            <!-- Smart Context-Aware JSON Export Group -->
+            <div class="json-btn-group">
+              <button type="button" class="btn-secondary btn-sm" id="btnQuickCopyJson" title="Copy nhanh JSON đúng theo chế độ đang mở (kèm model, bài gốc, prompt, bài đã xử lý)">
+                <span class="mono">{ }</span> Copy JSON
+              </button>
+              <button type="button" class="btn-secondary btn-sm" id="btnOpenExportJson" title="Xem trước, tùy chọn chế độ xuất (đơn bài / đa prompt / đa bài / toàn kho) &amp; tải file .json">
+                ⬇ Xuất
+              </button>
+            </div>
+
+            <button type="button" class="btn-primary mode-cta active" data-for-mode="single" id="btnRunSingle" title="Ctrl + Enter">
+              ▶ Chạy Rewrite
+            </button>
+            <button type="button" class="btn-primary mode-cta" data-for-mode="matrix" id="btnRunMatrix">
+              ▶ Chạy 1 Bài × 10 Prompt
+            </button>
+            <button type="button" class="btn-primary mode-cta" data-for-mode="rotate" id="btnRunRotate">
+              ▶ Chạy Xoay 1-1
+            </button>
+          </div>
+        </section>
+
+        <!-- ==================== MODE 1: 1 BÀI × 1 PROMPT (FOCUS + INLINE EDITOR) ==================== -->
+        <section class="workspace-view active" id="viewModeSingle">
+          <div class="single-layout" id="singleLayout">
+            <div class="comparison-desk">
+              <!-- Ô A: ORIGINAL -->
+              <article class="compare-pane pane-original">
+                <header class="pane-head">
+                  <div class="pane-title-wrap">
+                    <span class="pane-index">A</span>
+                    <div>
+                      <h3>BÀI VIẾT GỐC</h3>
+                      <div class="pane-meta mono" id="origMetaLine">Chọn 1 bài bên trái hoặc dán nội dung vào đây</div>
+                    </div>
+                  </div>
+                  <div class="pane-tools">
+                    <button type="button" class="btn-xs" id="btnResetOrigText" title="Khôi phục nội dung gốc ban đầu" disabled>↺ Hoàn tác</button>
+                    <button type="button" class="btn-xs" id="btnSaveOrigText" title="Lưu chỉnh sửa nội dung gốc" disabled>💾 Lưu sửa</button>
+                    <a class="btn-xs hidden" id="origExternalLink" href="#" target="_blank" rel="noopener">Nguồn ↗</a>
+                    <button type="button" class="btn-xs" id="btnCopyOriginal">Copy</button>
+                  </div>
+                </header>
+                <div class="sub-strip">
+                  <span class="safety-badge neutral" id="origSafetyBadge">Chưa có nội dung</span>
+                  <span class="mono word-stat" id="origStats">0 từ</span>
+                </div>
+                <div class="pane-body">
+                  <textarea id="originalTextArea" class="editor-original" placeholder="Chọn bài đã crawl ở cột trái, hoặc dán thẳng bài viết gốc vào đây rồi bấm Ctrl + Enter..." spellcheck="false"></textarea>
+                </div>
+              </article>
+
+              <div class="compare-spine">
+                <button type="button" class="spine-trigger" id="btnSpineRewrite" title="Chạy Rewrite (Ctrl + Enter)">→</button>
+              </div>
+
+              <!-- Ô B: REWRITTEN -->
+              <article class="compare-pane pane-rewritten">
+                <header class="pane-head">
+                  <div class="pane-title-wrap">
+                    <span class="pane-index accent">B</span>
+                    <div>
+                      <div class="pane-title-line">
+                        <h3>BÀI VIẾT ĐÃ XỬ LÝ</h3>
+                        <span class="status-pill idle" id="rwStatusPill">CHỜ CHẠY</span>
+                      </div>
+                      <div class="pane-meta mono" id="rwMetaLine">--</div>
+                    </div>
+                  </div>
+                  <div class="pane-tools">
+                    <button type="button" class="btn-xs hidden" id="btnSyncPromptToOutput" title="Chuyển editor sang đúng prompt đã tạo kết quả này"></button>
+                    <button type="button" class="btn-xs mono" id="btnCopySingleJson" title="Copy JSON của bài này (model + bài gốc + prompt + bài đã xử lý)">{ } JSON</button>
+                    <button type="button" class="btn-xs" id="btnCopyRewritten">Copy</button>
+                  </div>
+                </header>
+
+                <div class="sub-strip">
+                  <div class="view-tabs" id="rwViewTabs">
+                    <button type="button" class="vtab active" data-view="rendered">Bản đọc</button>
+                    <button type="button" class="vtab" data-view="iterdiff" title="So sánh kết quả trước & sau khi bạn chỉnh sửa prompt">Diff Trước↔Sau</button>
+                    <button type="button" class="vtab" data-view="raw">Raw vs Clean</button>
+                    <button type="button" class="vtab" data-view="history">Lịch sử <span class="mono" id="historyCountBadge">0</span></button>
+                  </div>
+                  <span class="mono word-stat" id="rwStats">0 từ</span>
+                </div>
+
+                <div class="error-callout hidden" id="rwErrorCallout">
+                  <div class="error-callout-head">
+                    <strong id="rwErrorTitle">Lỗi</strong>
+                    <button type="button" class="btn-xs" id="btnToggleTraceback">Traceback</button>
+                  </div>
+                  <p id="rwErrorMessage"></p>
+                  <pre class="error-trace hidden mono" id="rwErrorTrace"></pre>
+                </div>
+
+                <div class="pane-body rw-body">
+                  <div class="rw-view active" id="viewRendered">
+                    <div class="rw-empty-state" id="rwEmptyState">
+                      <div class="empty-glyph">◈</div>
+                      <p>Chưa có kết quả rewrite</p>
+                      <span>Chọn 1 prompt và nhấn <strong>Chạy Rewrite</strong> (hoặc sửa prompt ở khung dưới rồi nhấn <strong>Test nháp</strong>).</span>
+                    </div>
+                    <div class="rw-rendered-content hidden" id="rwRenderedText"></div>
+                  </div>
+
+                  <div class="rw-view" id="viewIterDiff">
+                    <div class="diff-legend">
+                      <span class="diff-chip del">Bản chạy trước</span>
+                      <span class="diff-chip ins">Bản mới sau chỉnh sửa</span>
+                    </div>
+                    <div class="diff-output" id="rwIterDiffOutput"></div>
+                  </div>
+
+                  <div class="rw-view" id="viewRaw">
+                    <div class="raw-compare-grid">
+                      <div>
+                        <div class="sub-label mono">RAW OUTPUT TỪ MODEL</div>
+                        <pre class="code-box" id="rwRawOutput"></pre>
+                      </div>
+                      <div>
+                        <div class="sub-label mono">SAU _clean_output()</div>
+                        <pre class="code-box" id="rwCleanOutput"></pre>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="rw-view" id="viewHistory">
+                    <div class="history-list" id="rwHistoryList"></div>
+                  </div>
+                </div>
+
+                <footer class="audit-bar hidden" id="rwAuditBar">
+                  <div class="audit-score-wrap">
+                    <span class="audit-label">TUÂN THỦ</span>
+                    <span class="audit-score mono" id="auditScoreVal">--</span>
+                  </div>
+                  <div class="audit-checks" id="auditChecksList"></div>
+                </footer>
+              </article>
+            </div>
+
+            <!-- Inline Direct Prompt .txt Editor -->
+            <section class="inline-prompt-editor" id="inlinePromptEditor">
+              <header class="pe-head">
+                <div class="pe-title-group">
+                  <span class="kicker">EDIT .TXT</span>
+                  <strong class="mono" id="inlinePeCode">G1_01</strong>
+                  <span class="pe-angle" id="inlinePeAngle">--</span>
+                  <span class="pe-badge hidden" id="inlinePeDirtyBadge">BẢN NHÁP CHƯA LƯU</span>
+                  <span class="pe-badge err hidden" id="inlinePePlaceholderErr">⚠ Thiếu {text}</span>
+                </div>
+                <div class="pe-actions">
+                  <span class="mono muted-tag" id="inlinePeMeta">--</span>
+                  <button type="button" class="btn-xs" id="btnInlineRevertDraft" title="Hủy sửa nháp, tải lại nội dung đang lưu trên file">↺ Hủy nháp</button>
+                  <button type="button" class="btn-xs hidden" id="btnInlineRestoreBackup" title="Khôi phục về bản gốc ban đầu trước lần sửa đầu tiên">⟲ Khôi phục gốc</button>
+                  <button type="button" class="btn-secondary btn-xs-pad" id="btnInlineTestDraft">▶ Test nháp</button>
+                  <button type="button" class="btn-primary btn-xs-pad" id="btnInlineSavePrompt">💾 Lưu file .txt</button>
+                </div>
+              </header>
+              <textarea id="inlinePeTextarea" class="pe-textarea mono" spellcheck="false" placeholder="Chọn một trong 20 prompt ở danh sách để xem và tinh chỉnh trực tiếp..."></textarea>
+            </section>
+          </div>
+        </section>
+
+        <!-- ==================== MODE 2: STICKY SIDE-BY-SIDE SPLIT DESK (1 BÀI × 20 PROMPT) ==================== -->
+        <section class="workspace-view" id="viewModeMatrix">
+          <div class="matrix-split" id="matrixSplit">
+            <!-- LEFT STICKY COLUMN: PINNED ORIGINAL ARTICLE -->
+            <aside class="compare-pane matrix-orig-col" id="matrixOrigCol">
+              <header class="pane-head">
+                <div class="pane-title-wrap">
+                  <span class="pane-index">A</span>
+                  <div>
+                    <h3>BÀI VIẾT GỐC</h3>
+                    <div class="pane-meta mono" id="matrixOrigMeta">Chưa chọn bài</div>
+                  </div>
+                </div>
+                <div class="pane-tools">
+                  <button type="button" class="btn-xs" id="btnCopyMatrixOrig">Copy</button>
+                  <button type="button" class="btn-xs" id="btnCollapseMatrixOrig" title="Thu gọn cột bài gốc để xem 20 kết quả rộng hơn">◀ Thu gọn</button>
+                </div>
+              </header>
+
+              <div class="mismatch-banner hidden" id="matrixMismatchBanner">
+                <span>⚠ Kết quả bên phải đang là của <strong>bài khác</strong> với bài bạn vừa chọn!</span>
+                <div class="mismatch-btns">
+                  <button type="button" class="btn-xs" id="btnMatrixViewOutputOrig">Xem bài của KQ</button>
+                  <button type="button" class="btn-primary btn-xs-pad" id="btnMatrixRerunNewPost">Chạy lại cho bài này</button>
+                </div>
+              </div>
+
+              <div class="sub-strip">
+                <span class="safety-badge neutral" id="matrixOrigSafety">Chưa có nội dung</span>
+                <span class="mono word-stat" id="matrixOrigStats">0 từ</span>
+              </div>
+
+              <div class="pane-body">
+                <textarea id="matrixSourceEditor" class="editor-original" placeholder="Chọn 1 bài ở cột trái hoặc dán bài viết gốc vào đây để so sánh song song với 20 kết quả rewrite bên phải..." spellcheck="false"></textarea>
+              </div>
+            </aside>
+
+            <!-- RIGHT SCROLLABLE COLUMN: RADAR + TOOLBAR + 20 FULL-HEIGHT CARDS -->
+            <div class="matrix-results-col">
+              <div class="matrix-results-top">
+                <!-- Smart Diversity & Compliance Analytics Radar -->
+                <div class="radar-panel hidden" id="matrixRadar">
+                  <div class="radar-metrics" id="matrixRadarMetrics"></div>
+                  <div class="radar-insights" id="matrixRadarInsights"></div>
+                </div>
+
+                <div class="matrix-toolbar">
+                  <div class="filter-pills" id="matrixFilterPills">
+                    <button type="button" class="btn-xs hidden" id="btnShowMatrixOrig">▶ Hiện Bài gốc</button>
+                    <button type="button" class="fpill active" data-mf="all">Tất cả</button>
+                    <button type="button" class="fpill" data-mf="g1">Group 1</button>
+                    <button type="button" class="fpill" data-mf="g2">Group 2</button>
+                    <button type="button" class="fpill" data-mf="low">Điểm &lt; 85</button>
+                    <button type="button" class="fpill" data-mf="overlap">Trùng lặp</button>
+                    <button type="button" class="fpill" data-mf="err">Lỗi / Reject</button>
+                  </div>
+
+                  <div class="matrix-toolbar-right">
+                    <div class="segmented col-toggle" id="matrixColSwitch" title="Chế độ cột hiển thị kết quả">
+                      <button type="button" class="seg-btn active" data-cols="1">1 Cột</button>
+                      <button type="button" class="seg-btn" data-cols="2">2 Cột</button>
+                    </div>
+                    <select id="matrixSortSelect" class="sort-select">
+                      <option value="order">Thứ tự: G1 → G2</option>
+                      <option value="score_asc">Điểm: Thấp → Cao</option>
+                      <option value="score_desc">Điểm: Cao → Thấp</option>
+                      <option value="overlap_desc">Trùng lặp: Cao → Thấp</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="matrix-grid cols-1" id="matrixGrid">
+                <div class="stage-empty">
+                  <div class="empty-glyph">⊞</div>
+                  <h3>So sánh song song 1 Bài gốc (trái) ↔ 10 Prompt (phải)</h3>
+                  <p>Chọn số <strong>LUỒNG</strong> ở thanh trên rồi nhấn <strong>▶ Chạy 1 Bài × 10 Prompt</strong>.</p>
+                  <span>Bài gốc luôn giữ cố định bên trái để bạn đối chiếu từng câu từng chữ với toàn bộ 10 phiên bản rewrite bên phải.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== MODE 3: N BÀI × XOAY ĐỦ 10 PROMPT (1-TO-1) ==================== -->
+        <section class="workspace-view" id="viewModeRotate">
+          <div class="rotate-header">
+            <div class="coverage-strip">
+              <div class="coverage-head">
+                <span class="kicker">COVERAGE 10 PROMPT</span>
+                <span class="mono muted-tag" id="rotateCoverageLabel">0 / 10 prompt đã phủ</span>
+              </div>
+              <div class="coverage-dots" id="rotateCoverageDots"></div>
+            </div>
+
+            <div class="radar-panel hidden" id="rotateRadar">
+              <div class="radar-metrics" id="rotateRadarMetrics"></div>
+              <div class="radar-insights" id="rotateRadarInsights"></div>
+            </div>
+
+            <div class="matrix-toolbar">
+              <div class="filter-pills" id="rotateFilterPills">
+                <button type="button" class="fpill active" data-rf="all">Tất cả cặp</button>
+                <button type="button" class="fpill" data-rf="g1">Group 1</button>
+                <button type="button" class="fpill" data-rf="g2">Group 2</button>
+                <button type="button" class="fpill" data-rf="low">Điểm &lt; 85</button>
+                <button type="button" class="fpill" data-rf="err">Lỗi / Reject</button>
+              </div>
+              <span class="mono muted-tag">Mỗi cặp hiển thị Bài gốc (trái) ↔ Bài đã rewrite (phải)</span>
+            </div>
+          </div>
+
+          <div class="rotate-list" id="rotateList"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ==================== SLIM COLLAPSIBLE LOG CONSOLE ==================== -->
+    <section class="log-dock" id="logDock" data-size="min">
+      <header class="log-head" id="logHeadBar">
+        <div class="log-head-left">
+          <span class="sse-dot" id="sseDot" title="Live SSE log stream"></span>
+          <span class="log-title">LOG</span>
+          <div class="log-level-pills" id="logLevelPills">
+            <button type="button" class="lpill active" data-level="ALL">Tất cả</button>
+            <button type="button" class="lpill err" data-level="ERROR">Lỗi <span class="mono" id="logErrorCount">0</span></button>
+            <button type="button" class="lpill warn" data-level="WARNING">Warn</button>
+            <button type="button" class="lpill ok" data-level="SUCCESS">OK</button>
+          </div>
+          <span class="log-latest-preview mono" id="logLatestPreview"></span>
+        </div>
+
+        <div class="log-head-right">
+          <input type="search" id="logSearch" class="log-search" placeholder="Lọc log..." />
+          <button type="button" class="btn-xs" id="btnCopyLogs">Copy</button>
+          <button type="button" class="btn-xs" id="btnClearLogs">Xóa</button>
+          <button type="button" class="btn-xs" id="btnCycleLogSize" title="Mở rộng / Thu nhỏ console">▲ Mở Log</button>
+        </div>
+      </header>
+      <div class="log-stream mono" id="logStream"></div>
+    </section>
+  </div>
+
+  <!-- ==================== SLIDE-OVER PROMPT EDITOR (FOR MODE 2 & 3 CARDS) ==================== -->
+  <div class="slideover-backdrop hidden" id="promptDrawerBackdrop">
+    <aside class="slideover-panel">
+      <header class="pe-head">
+        <div class="pe-title-group">
+          <span class="kicker">SỬA PROMPT</span>
+          <strong class="mono" id="drawerPeCode">--</strong>
+          <span class="pe-badge hidden" id="drawerPeDirty">NHÁP</span>
+        </div>
+        <div class="pe-actions">
+          <button type="button" class="btn-xs" id="btnDrawerRevert">↺ Hủy nháp</button>
+          <button type="button" class="btn-xs hidden" id="btnDrawerRestore">⟲ Bản gốc</button>
+          <button type="button" class="icon-close" id="btnClosePromptDrawer">✕</button>
+        </div>
+      </header>
+      <div class="slideover-sub mono" id="drawerPePath">--</div>
+      <div class="slideover-body">
+        <textarea id="drawerPeTextarea" class="pe-textarea mono" spellcheck="false"></textarea>
+        <div class="slideover-preview">
+          <div class="drawer-preview-head">
+            <div class="view-tabs" id="drawerPreviewTabs">
+              <button type="button" class="vtab active" data-dtab="result">Kết quả hiện tại</button>
+              <button type="button" class="vtab" data-dtab="original">Bài viết gốc</button>
+              <button type="button" class="vtab" data-dtab="diff">Diff Trước↔Sau</button>
+            </div>
+            <span class="mono muted-tag" id="drawerPreviewMeta">--</span>
+          </div>
+          <div class="slideover-preview-text" id="drawerPreviewText"></div>
+          <div class="audit-checks" id="drawerPreviewChecks"></div>
+        </div>
+      </div>
+      <footer class="slideover-foot">
+        <span class="pe-badge err hidden" id="drawerPePlaceholderErr">⚠ Thiếu {text}</span>
+        <div class="slideover-foot-btns">
+          <button type="button" class="btn-secondary" id="btnDrawerTestOne">▶ Test lại ô này</button>
+          <button type="button" class="btn-primary" id="btnDrawerSave">💾 Lưu vào .txt</button>
+        </div>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- ==================== MANUAL POST MODAL ==================== -->
+  <div class="modal-backdrop hidden" id="manualModal">
+    <div class="modal-card">
+      <header class="modal-head">
+        <h3>Nhập bài viết gốc để test prompt</h3>
+        <button type="button" class="icon-close" data-close="manualModal">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="sample-bar">
+          <span>Mẫu nhanh:</span>
+          <button type="button" class="btn-xs" id="btnSampleCrypto">Tín hiệu $BTC / $SOL (sạch)</button>
+          <button type="button" class="btn-xs" id="btnSampleSensitive">Tin Fed / Trump (test Reject)</button>
+        </div>
+        <div class="modal-row">
+          <label class="mini-field">
+            <span>Nguồn</span>
+            <select id="manualSource">
+              <option value="manual">Manual</option>
+              <option value="binance">Binance</option>
+              <option value="okx">OKX</option>
+              <option value="kucoin">KuCoin</option>
+              <option value="sosovalue">SoSoValue</option>
+            </select>
+          </label>
+          <label class="mini-field">
+            <span>Nhãn</span>
+            <input type="text" id="manualAuthor" value="manual_test" />
+          </label>
+        </div>
+        <label class="mini-field">
+          <span>Nội dung bài viết gốc</span>
+          <textarea id="manualText" rows="7" placeholder="Dán bài viết crypto (EN/VN) để test rewrite..."></textarea>
+        </label>
+      </div>
+      <footer class="modal-foot">
+        <button type="button" class="btn-ghost-sm" data-close="manualModal">Hủy</button>
+        <button type="button" class="btn-primary" id="btnManualSave">Thêm &amp; Chọn bài</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================== SMART JSON EXPORT MODAL ==================== -->
+  <div class="modal-backdrop hidden" id="exportJsonModal">
+    <div class="modal-card modal-lg">
+      <header class="modal-head">
+        <div class="pe-title-group">
+          <span class="kicker">JSON EXPORT</span>
+          <h3>Xuất dữ liệu thông minh (Copy / Tải file .json)</h3>
+        </div>
+        <button type="button" class="icon-close" data-close="exportJsonModal">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="export-controls">
+          <label class="mini-field">
+            <span>Phạm vi dữ liệu (tự động chọn theo chức năng đang mở)</span>
+            <select id="expScope">
+              <option value="single">Đơn bài viết hiện tại (Mode 1 · 1 Bài × 1 Prompt)</option>
+              <option value="single_history">Đơn bài viết + Toàn bộ lịch sử chạy (Mode 1)</option>
+              <option value="matrix">1 Bài × Đa Prompt (Mode 2 · 10 Prompt)</option>
+              <option value="rotate">Đa bài viết × Xoay 10 Prompt (Mode 3 · 1-1)</option>
+              <option value="all_rewritten">Toàn bộ bài đã rewrite trong kho (RAM/Ổ cứng)</option>
+            </select>
+          </label>
+          <div class="export-meta-pill mono" id="expMetaStats">0 mục · 0 KB</div>
+        </div>
+
+        <div class="export-options">
+          <label class="toggle-inline">
+            <input type="checkbox" id="expIncludePrompt" checked />
+            <span>Kèm toàn văn Prompt của từng bài</span>
+          </label>
+          <label class="toggle-inline">
+            <input type="checkbox" id="expMinimal" />
+            <span>Chế độ gọn (chỉ giữ model, bài gốc, prompt, bài đã xử lý)</span>
+          </label>
+          <label class="toggle-inline">
+            <input type="checkbox" id="expRespectFilter" />
+            <span>Chỉ xuất theo bộ lọc đang xem (Mode 2 / 3)</span>
+          </label>
+          <label class="toggle-inline" id="expSummaryWrap">
+            <input type="checkbox" id="expIncludeSummary" checked />
+            <span>Kèm thống kê Radar &amp; Audit</span>
+          </label>
+        </div>
+
+        <pre class="export-preview mono" id="exportJsonPreview"></pre>
+      </div>
+      <footer class="modal-foot">
+        <span class="mono muted-tag" id="expFilenameHint" style="margin-right:auto">--</span>
+        <button type="button" class="btn-ghost-sm" data-close="exportJsonModal">Đóng</button>
+        <button type="button" class="btn-secondary" id="btnModalDownloadJson">⬇ Tải file .json</button>
+        <button type="button" class="btn-primary" id="btnModalCopyJson">📋 Copy JSON</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================== STORAGE MODAL ==================== -->
+  <div class="modal-backdrop hidden" id="storageModal">
+    <div class="modal-card modal-sm">
+      <header class="modal-head">
+        <h3>Quản lý bộ nhớ Crawl (RAM / Ổ cứng)</h3>
+        <button type="button" class="icon-close" data-close="storageModal">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="storage-summary mono" id="storageSummaryBox"></div>
+        <div class="storage-actions-grid">
+          <button type="button" class="btn-secondary" id="btnSyncToDisk">💾 Lưu RAM → Ổ cứng</button>
+          <button type="button" class="btn-secondary" id="btnLoadFromDisk">📂 Nạp Ổ cứng → RAM</button>
+          <button type="button" class="btn-secondary" id="btnImportProdDb">📥 Import Production DB</button>
+          <a class="btn-secondary btn-link" href="/api/storage/export">⬇ Export JSON</a>
+        </div>
+        <div class="danger-zone">
+          <button type="button" class="btn-danger-ghost" id="btnClearRewritesOnly">Xóa kết quả Rewrite</button>
+          <button type="button" class="btn-danger" id="btnClearAllPosts">Xóa toàn bộ bài</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+  <script src="{{ url_for('static', filename='js/studio.js') }}"></script>
+</body>
+</html>

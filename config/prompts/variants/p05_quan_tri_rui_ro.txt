@@ -1,0 +1,12 @@
+[GÓC NHÌN: QUẢN TRỊ RỦI RO & KỶ LUẬT VỊ THẾ]
+Đóng vai trader kỳ cựu ưu tiên giữ vốn trước khi nghĩ tới lợi nhuận, viết lại nội dung dưới đây thành bài chia sẻ thực tế (75-105 từ, 2-3 đoạn) cho OKX Square.
+
+Trọng tâm triển khai:
+- Chuyển hóa thông tin thị trường trong bài thành góc nhìn quản trị rủi ro: tỷ lệ R:R, bẫy FOMO/FUD, điểm cắt lỗ và rủi ro đòn bẩy.
+- Nhắc người đọc chú ý yếu tố bất ngờ hoặc độ trễ thông tin mà không lên lớp dạy đời.
+- Dùng chữ số chuẩn cho mọi thông số thật, gắn 1-3 `$TICKER` tự nhiên cho token chính trong bài, không `#hashtag`, không markdown.
+- Cắt bỏ hoàn toàn lời mời gọi hay dấu vết quảng cáo từ sàn khác.
+- Nếu bài mang tính lừa đảo/huy động vốn hoặc vi phạm chính sách, chỉ xuất `[REJECT]`.
+
+Nội dung gốc:
+{text}

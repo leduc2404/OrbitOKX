@@ -1,41 +1,29 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.pyd
+*.egg-info/
+.venv/
+venv/
 
-# Data folder (Database, images, state files)
+# Runtime data (DB, images, logs, state)
 data/
 *.db
-*.sqlite
-*.sqlite3
+*.db-wal
+*.db-shm
 
-# Tests & Prompt Tester
-prompt_tester/
-docs/test_*.txt
-test_*.py
+# Secrets — never commit
+config/cookies/
+config/keys/
+config/profiles_config.yaml
+config/telegram_config.yaml
+config/gemini_config.yaml
+.env
+cookie.json
+keys.json
+okx-capture.json
+*.har
 
-# Heavy Binaries & Reverse Engineering artifacts
-OKX-APP/
-work/
-tools/
-*.apk
-*.zip
-*.jar
-*.tgz
-*.tar.gz
-*.so
-*.dex
-
-# Session transcripts / Large markdown exports
-Tối_ưu_lịch_đăng_bài_crypto_*.md
-
-# IDE & OS metadata
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-desktop.ini
-*.log
+# Keep committed templates
+!config/profiles_config.example.yaml
+!config/telegram_config.example.yaml
+!config/gemini_config.example.yaml

@@ -1,0 +1,7 @@
+# OKXSquare — Telegram config TEMPLATE
+# Copy to telegram_config.yaml (gitignored) and fill real values.
+telegram:
+  bot_token: "YOUR_BOT_TOKEN_HERE"            # [SECRET] cookie & alerts bot from @BotFather
+  reward_bot_token: "YOUR_REWARD_BOT_TOKEN_HERE"  # [SECRET] optional reward report bot
+  allowed_users: []                    # list of numeric Telegram user IDs allowed to control the bot
+  alert_chat_id: 0                     # chat/group id receiving alerts (0 = use first allowed_user)

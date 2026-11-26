@@ -1,0 +1,74 @@
+# OKXSquare — Gemini config TEMPLATE (đa provider, port từ BinanceSquare)
+# Copy thành gemini_config.yaml và điền key thật. active_provider=gemini_proxy
+# cần proxy local 127.0.0.1:8045 chạy; đổi sang 'gemma' nếu dùng key trực tiếp.
+active_provider: gemini_proxy
+gemma:
+  enabled: true
+  api_keys:
+  - YOUR_GOOGLE_API_KEY_HERE
+  models:
+  - name: gemma-4-31b-it
+    rpm: 15
+    tpm: 99999999
+    rpd: 1500
+    priority: 1
+  rate_limiting:
+    rpm_per_key: 15
+    penalty_cooldown: 60
+    tpm_per_key: 99999999
+    rpd_per_key: 1500
+  processing:
+    parallel_mode: true
+    max_workers: null
+    retry_attempts: 3
+    retry_delay: 2
+    request_timeout: 60
+    model_cooldown_seconds: 40
+  generation:
+    temperature: 0.65
+    top_p: 0.8
+    top_k: 40
+    max_output_tokens: 2048
+gemini_proxy:
+  enabled: true
+  api_key: YOUR_PROXY_API_KEY_HERE
+  endpoint: http://127.0.0.1:8045/v1
+  model: gemini-3-flash
+  rate_limiting:
+    min_delay_seconds: 1
+    cooldown_seconds: 40
+  processing:
+    max_workers: 10
+    retry_attempts: 3
+    retry_delay: 2
+    request_timeout: 60
+  generation:
+    temperature: 0.95
+    top_p: 0.95
+    top_k: 40
+    max_output_tokens: 2048
+gemini_direct:
+  enabled: false
+  api_keys:
+  - YOUR_GOOGLE_API_KEY_HERE
+  model: gemini-2.5-flash
+  rate_limiting:
+    rpm_per_key: 10
+    penalty_cooldown: 60
+  processing:
+    parallel_mode: true
+    max_workers: null
+    retry_attempts: 3
+    retry_delay: 2
+    request_timeout: 60
+    cooldown_seconds: 40
+  generation:
+    temperature: 0.65
+    top_p: 0.8
+    top_k: 40
+    max_output_tokens: 2048
+processing:
+  include_images: false
+  max_post_retries: 3
+  retry_failed_in_next_cycle: true
+  failed_post_cooldown_minutes: 5

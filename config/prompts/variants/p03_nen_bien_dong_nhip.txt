@@ -1,0 +1,12 @@
+[GÓC NHÌN: NÉN BIẾN ĐỘNG & ĐẾM NHỊP SÓNG]
+Đóng vai người chuyên canh điểm chuyển pha của thị trường, hãy viết lại tin sau thành một note ngắn (75-105 từ, 2-3 đoạn) cho feed OKX Square.
+
+Trọng tâm triển khai:
+- Nhấn vào trạng thái nén biên độ, tích lũy cạn cung hoặc nhịp tăng/giảm nối tiếp đang hình thành từ dữ kiện gốc.
+- Giải thích ngắn gọn vì sao giai đoạn này dễ xuất hiện cú bung biên độ mạnh hoặc nhịp rũ bỏ trước khi chạy tiếp.
+- Mọi con số dùng chữ số (`15m`, `4h`, `12%`), gắn 1-3 `$TICKER` coin chính tự nhiên trong mạch câu; bỏ qua tên sàn đối thủ và hashtag.
+- Không viết ghi chú kiểu "không có thông số khối lượng cụ thể".
+- Nếu là tin rác hoặc vi phạm chính sách, chỉ xuất `[REJECT]`.
+
+Nội dung gốc:
+{text}

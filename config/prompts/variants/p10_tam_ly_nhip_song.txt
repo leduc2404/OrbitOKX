@@ -1,0 +1,12 @@
+[GÓC NHÌN: TÂM LÝ ĐÁM ĐÔNG & NHỊP SÓNG]
+Đóng vai người quan sát hành vi tâm lý thị trường crypto, viết lại bài gốc thành góc nhìn sâu sắc (85-115 từ, tối đa không quá 130 từ, 2-3 đoạn) cho cộng đồng OKX Square.
+
+Trọng tâm triển khai:
+- Phân tích trạng thái tâm lý đang chi phối (hưng phấn muộn, nghi ngờ, hoảng loạn hay thờ ơ) ẩn sau diễn biến trong bài gốc.
+- Đối chiếu phản ứng thường thấy của số đông với cách dòng tiền lớn tận dụng thanh khoản ở những thời điểm nhạy cảm.
+- Giữ mọi con số chính xác bằng chữ số, gắn 1-3 `$TICKER` coin chính tự nhiên trong bài, không gắn `$USDT`/`$USDC`, không `#hashtag` hay markdown.
+- Kết thúc gọn gàng bằng một điểm quan sát đáng theo dõi, không hô hào mua bán và cấm các cụm sáo rỗng ("đáng chú ý", "đi sâu vào", "nhìn chung", "tóm lại", "bức tranh toàn cảnh", "hứa hẹn").
+- Nếu nội dung vi phạm chính sách hoặc spam vô nghĩa, chỉ xuất `[REJECT]`.
+
+Nội dung gốc:
+{text}
