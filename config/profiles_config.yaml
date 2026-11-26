@@ -1,0 +1,183 @@
+# =====================================================================
+# OKXSquare — profiles_config TEMPLATE
+# Copy this file to profiles_config.yaml and fill in real values.
+# profiles_config.yaml is gitignored. Secret material (cookies, keys,
+# bot token, proxy creds, Gemini key) lives in gitignored files only.
+# =====================================================================
+
+general:
+  headless: true
+  debug_mode: false
+  browser_timeout: 60000
+
+# ==================== ACCOUNTS ====================
+# Each account references its own secret files:
+#   cookies_file -> OKX browser cookies (token JWT, devId, ok_site_info, ...)
+#   keys_file    -> {ecdsa_pkcs8_b64, hmac_raw_b64}
+# Bài đăng được chia round-robin toàn cục giữa các account enabled (không phân nhóm).
+posting_accounts:
+  - name: account_1
+    enabled: true
+    weight: 1.0
+    cookies_file: config/cookies/account_1.json
+    keys_file: config/keys/account_1.json
+    proxy: ""                 # http://user:pass@host:port  [SECRET]
+    proxy_country: VN
+    fingerprint: ""           # empty = auto sha256(account)-seeded impersonate
+
+  - name: account_2
+    enabled: false
+    weight: 1.0
+    cookies_file: config/cookies/account_2.json
+    keys_file: config/keys/account_2.json
+    proxy: ""
+    proxy_country: VN
+    fingerprint: ""
+
+# ==================== POSTING ====================
+posting_config:
+  post_interval: 900          # giãn cách đăng trung bình mỗi account (giây)
+  min_global_gap_seconds: 45  # giãn cách tối thiểu giữa 2 bài bất kỳ trên toàn dàn account
+  startup_stagger_enabled: true   # rải đều thời điểm khởi chạy giữa các account, chống nổ burst
+  account_tempo_jitter: true      # cá nhân hóa nhịp đăng (tempo_factor + hour_shift) ổn định theo account
+
+  random_distribution:
+    enabled: true
+    type: gaussian            # gaussian | uniform
+    min_ratio: 0.75
+    max_ratio: 1.30
+    std_dev_ratio: 0.15
+
+  hourly_heatmap:
+    enabled: true
+    timezone: Asia/Bangkok    # GMT+7 (khung giờ trader Việt Nam + phiên Mỹ/Âu)
+    hourly_multipliers:
+      0: 1.45
+      1: 1.85
+      2: 2.15
+      3: 2.40
+      4: 2.40
+      5: 2.00
+      6: 1.45
+      7: 0.95
+      8: 0.90
+      9: 0.85
+      10: 0.90
+      11: 0.95
+      12: 1.00
+      13: 0.95
+      14: 1.00
+      15: 1.05
+      16: 1.05
+      17: 1.05
+      18: 1.00
+      19: 0.90
+      20: 0.85
+      21: 0.85
+      22: 0.95
+      23: 1.15
+
+  anti_duplicate:
+    enabled: true
+    recent_similarity_window_hours: 12   # đối chiếu bài đã đăng trong 12h qua
+    similarity_threshold: 0.58           # >= 58% giống shingle -> coi là gần trùng, auto-skip
+    coin_cooldown_minutes: 30            # giãn cách coin chủ đạo giữa các bài liên tiếp nếu còn bài khác
+
+  acc_activity: []            # empty = all enabled accounts; else 1-indexed list
+  distribution_mode: lazy_smart   # lazy_smart | round_robin | racing
+  retry_on_failure: 3
+  max_consecutive_failures: 5
+  quarantine_minutes: 30
+  session_refresh_threshold: 50
+
+  # OKX publish defaults
+  publish:
+    group: USDT
+    default_tags: []          # e.g. [BTC, ETH]; tags must also appear in content
+    dry_run: false            # LIVE publish enabled
+
+# ==================== CRAWL ====================
+crawl_workers:
+  reload_interval: 600
+  adaptive_mode: true         # Chỉ crawl & xử lý Gemini đúng lượng bài mới nhất cần để đầy ready buffer
+  stale_crawled_seconds: 1200 # Chỉ dọn bài thô (crawled) cũ hơn 20 phút trước khi crawl mới
+  crawled_keep_seconds: 86400
+  cleanup_interval_seconds: 3600
+  max_workers: 10
+
+crawl_sources:
+  binance:
+    enabled: true
+    authors_file: config/crawl.yaml   # Danh sách authors Binance Square (chuẩn BinanceSquare)
+    authors: []                       # Tác giả bổ sung inline (nếu cần)
+    max_workers: 10
+    delay_seconds: 0.3
+    default_lookback_minutes: 30
+    max_posts_per_cycle: 15
+  kucoin:
+    enabled: false
+    page_size: 20
+    delay_seconds: 1.0
+    max_posts_per_cycle: 8
+  sosovalue:
+    enabled: false
+    page_size: 30
+    delay_seconds: 1.0
+    max_posts_per_cycle: 8
+  okx:
+    enabled: true             # OKX Orbit crawler (Hashtags / Trending / Feed / Authors)
+    hashtags: [BTC, ETH, SOL]
+    timeline_type: "1"        # "1" = Mới nhất, "2" = Tin & Media
+    include_trending: false
+    include_feed: false
+    authors: []
+    delay_seconds: 1.0
+    max_posts_per_cycle: 10
+
+crawl_proxies:
+  enabled: false
+  fallback_on_failure: true
+  proxy_timeout: 10
+  max_proxy_retries: 2
+  proxies: []                 # [SECRET] full proxy URLs
+
+# ==================== IMAGE PROCESSING ====================
+image_processing:
+  max_dimension: 1920
+  min_valid_bytes: 128
+  jpeg_quality: [89, 93]
+  sanitize:
+    enabled: true
+    perceptual_evasion: true
+  qr_detection:
+    enabled: true
+    drop_post_on_qr: true
+  watermark:                  # NEW module (Step 3) — best-effort heuristic
+    enabled: false
+    mode: "off"               # inpaint | crop | "off"
+    crop_top_ratio: 0.0
+    crop_bottom_ratio: 0.0
+    inpaint_roi: corners      # corners | edges | full
+    inpaint_radius: 3
+
+# ==================== GEMINI (AI rewrite) ====================
+# Đa provider port từ BinanceSquare; active_provider=gemini_proxy (local 8045).
+# Prompt variant pool tách theo nguồn: binance->group1, nguồn khác->group2.
+gemini:
+  enabled: true
+  config_file: config/gemini_config.yaml   # provider + key + generation params
+
+# ==================== TELEGRAM ====================
+telegram:
+  config_file: config/telegram_config.yaml
+  alerts_enabled: true
+
+# ==================== HEALTHCHECK ====================
+healthcheck:
+  enabled: true
+  ping_url: ""                # healthchecks.io ping URL
+  interval_seconds: 60
+
+# ==================== FARMING (placeholder — chưa triển khai) ====================
+farming:
+  enabled: false

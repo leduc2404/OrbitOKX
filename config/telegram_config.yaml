@@ -1,0 +1,7 @@
+# OKXSquare — Telegram config
+# telegram_config.yaml is gitignored.
+telegram:
+  bot_token: "8086838796:AAHQ4thOXnvH5VvPMORqERKL79EjHVItQS4"         # [SECRET] @okxcheck_bot (Báo cáo cookie & cảnh báo)
+  reward_bot_token: "7568683663:AAHBtLQyqyZwIGXWOVZq7Jh_a42KalUQ-6I"  # [SECRET] @okx_rewards_bot (Báo cáo reward)
+  allowed_users: [5411129020]          # list of numeric Telegram user IDs allowed to control the bot
+  alert_chat_id: 5411129020            # chat/group id receiving alerts (0 = use first allowed_user)

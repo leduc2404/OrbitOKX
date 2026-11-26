@@ -11,19 +11,9 @@ data/
 *.db-wal
 *.db-shm
 
-# Secrets — never commit
-config/cookies/
-config/keys/
-config/profiles_config.yaml
-config/telegram_config.yaml
-config/gemini_config.yaml
+# Secrets (excluded from repo only if outside OKXSquare)
 .env
 cookie.json
 keys.json
 okx-capture.json
 *.har
-
-# Keep committed templates
-!config/profiles_config.example.yaml
-!config/telegram_config.example.yaml
-!config/gemini_config.example.yaml
